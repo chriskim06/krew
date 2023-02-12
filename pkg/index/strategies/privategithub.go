@@ -14,6 +14,8 @@
 
 package strategies
 
+import "io"
+
 type GithubPrivateRelease struct {
 	Owner   string `json:"owner"`
 	Repo    string `json:"repo"`
@@ -21,12 +23,38 @@ type GithubPrivateRelease struct {
 	Asset   string `json:"asset"`
 }
 
-func (g GithubPrivateRelease) Auth() {
-	// init github client with personal access token from env var
+func (g GithubPrivateRelease) Name() string {
+	return "GithubPrivateRelease"
 }
 
-func (g GithubPrivateRelease) Download() {
+func (g GithubPrivateRelease) Get(_ string) (io.ReadCloser, error) {
+	// do the stuff to get the archive from the private repo
+	if err := g.Auth(); err != nil {
+		return nil, err
+	}
+	if err := g.Download(""); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (g GithubPrivateRelease) Auth() error {
+	// init github client with personal access token from env var
+	//     conf := environment.GetConfig()
+	//     token := conf.Env["KREW_GITHUB_TOKEN"]
+	//     if token == "" {
+	//     }
+	return nil
+}
+
+func (g GithubPrivateRelease) Download(destination string) error {
 	// get repo info by release tag
 	// get asset id for provided asset from repo info
 	// download release asset by id
+	return nil
+}
+
+func (g GithubPrivateRelease) Verify() error {
+	// check sha256sum of downloaded asset
+	return nil
 }

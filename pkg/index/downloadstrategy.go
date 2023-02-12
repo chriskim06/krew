@@ -19,25 +19,29 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"sigs.k8s.io/krew/internal/download"
 	"sigs.k8s.io/krew/pkg/index/strategies"
 )
 
 // DownloadStrategy defines the behavior various plugin sources should implement
 type DownloadStrategy interface {
-	Auth()
-	Download()
+	download.Fetcher
+	Name() string
+	Auth() error
+	Download(string) error
+	Verify() error
 }
 
 // Strategy is a concrete type that Plugin contains. This implements the json.Unmarshaler
 // interface so that multiple DownloadStrategy types can be unmarshaled. Any new DownloadStrategy
 // should be added to the UnmarshalJSON method below.
 type Strategy struct {
-	strategy DownloadStrategy
+	Strategy DownloadStrategy
 }
 
 func (r Strategy) Print() {
-	fmt.Println(r.strategy)
-	j, err := json.Marshal(r.strategy)
+	fmt.Println(r.Strategy)
+	j, err := json.Marshal(r.Strategy)
 	if err != nil {
 		return
 	}
@@ -65,7 +69,7 @@ func (r *Strategy) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(re.Stuff, &g); err != nil {
 			return err
 		}
-		release.strategy = g
+		release.Strategy = g
 	default:
 		return errors.New("unknown type")
 	}

@@ -104,7 +104,21 @@ func install(op installOperation, opts InstallOpts) error {
 			klog.Warningf("failed to clean up download staging directory: %s", err)
 		}
 	}()
-	if err := downloadAndExtract(downloadStagingDir, op.platform.URI, op.platform.Sha256, opts.ArchiveFileOverride); err != nil {
+	// check for download strategy here
+	release := op.platform.Release
+	if release != nil {
+		strategy := release.Strategy
+		if err := strategy.Auth(); err != nil {
+			return errors.Wrapf(err, "failed to authenticate for strategy %s", strategy.Name())
+		}
+		if err := strategy.Download(downloadStagingDir); err != nil {
+			return errors.Wrapf(err, "failed to download release for strategy %s", strategy.Name())
+		}
+		downloader := download.NewDownloader(download.NewSha256Verifier(op.platform.Sha256), strategy)
+		if err := downloader.Get("", downloadStagingDir); err != nil {
+			return err
+		}
+	} else if err := downloadAndExtract(downloadStagingDir, op.platform.URI, op.platform.Sha256, opts.ArchiveFileOverride); err != nil {
 		return errors.Wrap(err, "failed to unpack into staging dir")
 	}
 

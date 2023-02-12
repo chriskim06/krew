@@ -48,6 +48,9 @@ var infoCmd = &cobra.Command{
 			return errors.Wrap(err, "failed to load plugin manifest")
 		}
 		printPluginInfo(os.Stdout, index, p)
+		for _, item := range p.Spec.Platforms {
+			item.Release.Print()
+		}
 		return nil
 	},
 	PreRunE: checkIndex,
@@ -80,12 +83,12 @@ func printPluginInfo(out io.Writer, indexName string, plugin index.Plugin) {
 // indent converts strings to an indented format ready for printing.
 // Example:
 //
-//     \
-//      | This plugin is great, use it with great care.
-//      | Also, plugin will require the following programs to run:
-//      |  * jq
-//      |  * base64
-//     /
+//	\
+//	 | This plugin is great, use it with great care.
+//	 | Also, plugin will require the following programs to run:
+//	 |  * jq
+//	 |  * base64
+//	/
 func indent(s string) string {
 	out := "\\\n"
 	s = strings.TrimRightFunc(s, unicode.IsSpace)

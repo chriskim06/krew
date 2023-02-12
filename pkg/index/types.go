@@ -39,9 +39,11 @@ type PluginSpec struct {
 
 // Platform describes how to perform an installation on a specific platform
 // and how to match the target platform (os, arch).
+// Either a URI or a DownloadStrategy should be defined, but not both.
 type Platform struct {
-	URI    string `json:"uri,omitempty"`
-	Sha256 string `json:"sha256,omitempty"`
+	URI     string   `json:"uri,omitempty"`
+	Release Strategy `json:"release,omitempty"`
+	Sha256  string   `json:"sha256,omitempty"`
 
 	Selector *metav1.LabelSelector `json:"selector,omitempty"`
 	Files    []FileOperation       `json:"files"`

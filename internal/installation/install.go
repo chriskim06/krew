@@ -15,6 +15,7 @@
 package installation
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -105,15 +106,11 @@ func install(op installOperation, opts InstallOpts) error {
 		}
 	}()
 	// check for download strategy here
+	fmt.Println("checking release")
 	release := op.platform.Release
 	if release != nil {
+		fmt.Println("release not nil")
 		strategy := release.Strategy
-		if err := strategy.Auth(); err != nil {
-			return errors.Wrapf(err, "failed to authenticate for strategy %s", strategy.Name())
-		}
-		if err := strategy.Download(downloadStagingDir); err != nil {
-			return errors.Wrapf(err, "failed to download release for strategy %s", strategy.Name())
-		}
 		downloader := download.NewDownloader(download.NewSha256Verifier(op.platform.Sha256), strategy)
 		if err := downloader.Get("", downloadStagingDir); err != nil {
 			return err

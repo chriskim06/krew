@@ -23,14 +23,14 @@ import (
 	"sigs.k8s.io/krew/pkg/index/strategies"
 )
 
-// Strategy is a concrete type that Plugin contains. This implements the json.Unmarshaler
-// interface so that multiple DownloadStrategy types can be unmarshaled. Any new DownloadStrategy
-// should be added to the UnmarshalJSON method below.
-type Strategy struct {
+// Release is a concrete type that Plugin contains. This implements the json.Unmarshaler
+// interface so that multiple DownloadStrategy types can be unmarshaled using the
+// json.RawMessage type. Any new DownloadStrategy should be added to the UnmarshalJSON method below.
+type Release struct {
 	Strategy download.Fetcher
 }
 
-func (r Strategy) Print() {
+func (r Release) Print() {
 	fmt.Println(r.Strategy)
 	j, err := json.Marshal(r.Strategy)
 	if err != nil {
@@ -42,7 +42,7 @@ func (r Strategy) Print() {
 // UnmarshalJSON is the custom unmarshaler used to unmarshal a plugin DownloadStrategy to the
 // correct type. Any new DownloadStrategy should be added here. The type dictates which
 // DownloadStrategy we try to unmarshal the json.RawMessage to.
-func (r *Strategy) UnmarshalJSON(data []byte) error {
+func (r *Release) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == `""` {
 		return nil
 	}
@@ -53,7 +53,7 @@ func (r *Strategy) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &re); err != nil {
 		return err
 	}
-	var release Strategy
+	var release Release
 	switch re.Type {
 	case "github":
 		var g strategies.GithubPrivateRelease

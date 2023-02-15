@@ -40,30 +40,30 @@ func (g GithubPrivateRelease) Name() string {
 
 func (g GithubPrivateRelease) Get(_ string) (io.ReadCloser, error) {
 	// do the stuff to get the archive from the private repo
-	if err := g.init(); err != nil {
+	client, err := g.init()
+	if err != nil {
 		return nil, err
 	}
 	// the go-github library DownloadReleaseAsset function returns an io.ReadCloser
-	return g.download()
+	return g.download(client)
 }
 
-func (g *GithubPrivateRelease) init() error {
+func (g *GithubPrivateRelease) init() (*github.Client, error) {
 	// init github client with personal access token from env var
 	conf := environment.GetConfig()
 	token := conf.Env["KREW_GITHUB_TOKEN"]
 	if token == "" {
-		return errors.New("error must set KREW_GITHUB_TOKEN env var when downloading a private asset")
+		return nil, errors.New("error must set KREW_GITHUB_TOKEN env var when downloading a private asset")
 	}
 	tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	g.client = github.NewClient(oauth2.NewClient(context.Background(), tokenSource))
-	return nil
+	return github.NewClient(oauth2.NewClient(context.Background(), tokenSource)), nil
 }
 
-func (g GithubPrivateRelease) download() (io.ReadCloser, error) {
+func (g GithubPrivateRelease) download(client *github.Client) (io.ReadCloser, error) {
 	// get repo info by release tag
 	// get asset id for provided asset from repo info
 	// download release asset by id
-	release, _, err := g.client.Repositories.GetReleaseByTag(context.Background(), g.Owner, g.Repo, g.Release)
+	release, _, err := client.Repositories.GetReleaseByTag(context.Background(), g.Owner, g.Repo, g.Release)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +80,6 @@ func (g GithubPrivateRelease) download() (io.ReadCloser, error) {
 		return nil, errors.New("error did not find expected asset")
 	}
 
-	rc, _, err := g.client.Repositories.DownloadReleaseAsset(context.Background(), g.Owner, g.Repo, id, nil)
+	rc, _, err := client.Repositories.DownloadReleaseAsset(context.Background(), g.Owner, g.Repo, id, nil)
 	return rc, err
-}
-
-func (g GithubPrivateRelease) Verify() error {
-	// check sha256sum of downloaded asset
-	return nil
 }
